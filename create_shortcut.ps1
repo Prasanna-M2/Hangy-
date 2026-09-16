@@ -8,7 +8,7 @@ $ws = New-Object -ComObject WScript.Shell
 $s = $ws.CreateShortcut($shortcutPath)
 $s.TargetPath = $targetExe
 $s.WorkingDirectory = $workDir
-$s.Description = "Hangly for Windows — A tiny piece of motion for your desktop"
+$s.Description = "Hangly for Windows - A tiny piece of motion for your desktop"
 $s.IconLocation = "$icon,0"
 $s.Save()
 
