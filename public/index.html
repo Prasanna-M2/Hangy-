@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hangly for Windows — A Tiny Piece of Motion for Your Desktop</title>
+  <meta name="description" content="A charm hangs from your screen on a simulated 240Hz Verlet rope. Nudge it and it swings, carries momentum, and settles with real physics for Windows.">
+  <link rel="icon" type="image/png" href="/assets/icons/hangly-icon-256.png">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <!-- Desktop Simulation Viewport -->
+  <div class="desktop-viewport theme-windows-bloom-dark">
+    
+    <!-- Physics Rope & Charm Canvas (240Hz Verlet Engine) -->
+    <canvas id="physicsCanvas"></canvas>
+
+    <!-- Custom Pin Indicator (for Free Pin Hang Mode) -->
+    <div id="customPinIndicator" class="custom-pin-indicator"></div>
+
+    <!-- Top Quick-Action Header Bar -->
+    <header class="top-header-bar">
+      <div class="brand-badge">
+        <img src="/assets/icons/hangly-icon-256.png" alt="Hangly Logo" />
+        <span>Hangly <span class="brand-title-accent">Windows</span></span>
+      </div>
+
+      <div class="header-quick-actions">
+        <!-- Hang Mode Selector -->
+        <select id="hangModeSelect" class="form-select" style="padding: 4px 10px; font-size: 12px; width: auto;" title="Select Hang Mode">
+          <option value="topTrailing">Top-Right (Screen Edge)</option>
+          <option value="topCenter">Top-Center (Notch / Bar)</option>
+          <option value="topLeading">Top-Left (Corner)</option>
+          <option value="taskbar">Windows Taskbar Hang</option>
+          <option value="breeze">Ambient Breeze Mode</option>
+          <option value="pendulum">Hypnotic Pendulum</option>
+          <option value="magnetic">Magnetic Cursor Follow</option>
+          <option value="elastic">Bouncy Elastic Rope</option>
+          <option value="pin">Free Draggable Pin (Alt+Click)</option>
+          <option value="calm">Calm / Reduced Motion</option>
+        </select>
+
+        <button id="btnOpenLibrary" class="quick-btn" title="Open Charm Library (Ctrl+L)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Library</span>
+        </button>
+
+        <button id="btnOpenStudio" class="quick-btn" title="Create Custom Charm (Ctrl+N)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          <span>AI Studio</span>
+        </button>
+
+        <button id="btnOpenSettings" class="quick-btn" title="Settings (Ctrl+,)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Settings</span>
+        </button>
+      </div>
+
+      <div style="font-size: 11px; color: var(--text-muted); padding-left: 8px; border-left: 1px solid var(--panel-border);">
+        <span id="fpsMeter">60 FPS</span>
+      </div>
+    </header>
+
+    <!-- Simulated Windows Desktop Shortcuts -->
+    <div class="desktop-shortcuts">
+      <button class="desktop-icon-btn" id="iconOpenLibrary">
+        <img class="desktop-icon-img" src="/assets/previews/charm-preview-daruma@2x.png" alt="Library" />
+        <span>Charm Library</span>
+      </button>
+
+      <button class="desktop-icon-btn" id="iconOpenStudio">
+        <img class="desktop-icon-img" src="/assets/icons/hangly-icon-256.png" alt="AI Studio" />
+        <span>AI Studio</span>
+      </button>
+
+      <button class="desktop-icon-btn" id="iconOpenSettings">
+        <svg class="desktop-icon-img" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <span>Hangly Config</span>
+      </button>
+
+      <button class="desktop-icon-btn" id="iconToggleOverlay">
+        <svg class="desktop-icon-img" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span>Toggle Overlay</span>
+      </button>
+    </div>
+
+    <!-- Floating Quick-Controls Dock (Right Edge) -->
+    <div class="floating-side-dock">
+      <button class="dock-action-btn" id="dockFlickBtn" data-tooltip="Flick Charm (Space)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+      </button>
+      <button class="dock-action-btn" id="dockResetBtn" data-tooltip="Reset Rest Pose (R)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      </button>
+      <button class="dock-action-btn" id="dockLibraryBtn" data-tooltip="Charm Library">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      </button>
+      <button class="dock-action-btn" id="dockStudioBtn" data-tooltip="AI Charm Studio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button class="dock-action-btn" id="dockSettingsBtn" data-tooltip="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+
+    <!-- Windows 11 Taskbar -->
+    <footer class="windows-taskbar">
+      <div class="taskbar-left">
+        <div class="weather-widget">
+          <span>⛅</span>
+          <span>72°F Partly Cloudy</span>
+        </div>
+      </div>
+
+      <div class="taskbar-center">
+        <button class="taskbar-icon" title="Start">
+          <svg viewBox="0 0 24 24" fill="#00adef"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.902-1.799"/></svg>
+        </button>
+        <button class="taskbar-icon" title="Search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </button>
+        <button class="taskbar-icon active" title="Hangly Studio">
+          <img src="/assets/icons/hangly-icon-256.png" alt="Hangly" />
+        </button>
+      </div>
+
+      <div class="taskbar-right">
+        <div class="system-tray-area">
+          <button class="taskbar-icon tray-icon-hangly" id="trayHanglyIcon" title="Hangly System Tray">
+            <img src="/assets/icons/hangly-icon-256.png" alt="Hangly Tray" />
+          </button>
+          <div class="clock-area">
+            <span id="taskbarTime">12:00 PM</span>
+            <span id="taskbarDate">09/16/2026</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Hangly System Tray Popup Menu (Mac / Win Menu Parity) -->
+    <div class="hangly-tray-menu" id="hanglyTrayMenu">
+      <div class="tray-header">
+        <div class="tray-header-info">
+          <img src="/assets/icons/hangly-icon-256.png" alt="Hangly" />
+          <span>Hangly for Windows</span>
+        </div>
+        <span id="currentCharmName" style="font-size: 11px; color: var(--gold);">Daruma</span>
+      </div>
+
+      <button class="tray-menu-item" id="trayToggleOverlay">
+        <span>Show Desktop Charm</span>
+        <span class="shortcut">Ctrl+Shift+O</span>
+      </button>
+
+      <div class="tray-divider"></div>
+
+      <button class="tray-menu-item" onclick="document.getElementById('btnOpenLibrary').click()">
+        <span>Charm Library…</span>
+        <span class="shortcut">Ctrl+L</span>
+      </button>
+
+      <button class="tray-menu-item" onclick="document.getElementById('btnOpenStudio').click()">
+        <span>AI Charm Studio…</span>
+        <span class="shortcut">Ctrl+N</span>
+      </button>
+
+      <button class="tray-menu-item" onclick="document.getElementById('btnOpenSettings').click()">
+        <span>Settings & Physics…</span>
+        <span class="shortcut">Ctrl+,</span>
+      </button>
+
+      <div class="tray-divider"></div>
+
+      <button class="tray-menu-item" onclick="location.reload()">
+        <span>Restart Engine</span>
+        <span class="shortcut">F5</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Modal 1: Charm Library -->
+  <div class="modal-overlay" id="libraryModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <img src="/assets/icons/hangly-icon-256.png" width="24" height="24" style="border-radius: 6px;" alt="Logo" />
+          <h2>Charm Library</h2>
+        </div>
+        <button class="modal-close-btn" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="library-filter-bar">
+          <button class="filter-pill active" data-category="all">All Charms</button>
+          <button class="filter-pill" data-category="luck">Luck & Fortune</button>
+          <button class="filter-pill" data-category="protection">Protection & Amulets</button>
+          <button class="filter-pill" data-category="ritual">Ritual & Home</button>
+          <button class="filter-pill" data-category="classic">Classic Shapes</button>
+          <button class="filter-pill" data-category="custom">Custom Studio</button>
+        </div>
+
+        <div class="charms-grid" id="charmsGrid">
+          <!-- Populated dynamically via charms.js -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: AI Charm Studio -->
+  <div class="modal-overlay" id="studioModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          <h2>AI Charm Studio</h2>
+        </div>
+        <button class="modal-close-btn" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="studio-layout">
+          <div>
+            <div class="studio-upload-zone" id="studioDropZone">
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <h4 style="font-weight: 700;">Drop an image here</h4>
+              <p style="font-size: 12px; color: var(--text-muted);">PNG, JPEG, WebP, SVG (Auto background cutout)</p>
+              <input type="file" id="charmFileInput" accept="image/*" style="display: none;" />
+            </div>
+
+            <div class="studio-preview-box" style="margin-top: 16px;">
+              <img id="studioPreviewImage" src="" alt="Charm Preview" style="display: none;" />
+              <span style="font-size: 12px; color: var(--text-muted);" id="studioPlaceholderText">Preview appears here</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="form-group">
+              <label>Charm Name</label>
+              <input type="text" id="customCharmName" class="form-input" placeholder="e.g. Lucky Token" />
+            </div>
+
+            <div class="form-group">
+              <label>Material Sound Effect</label>
+              <select id="customCharmSound" class="form-select">
+                <option value="wood">Wood (Hollow Percussive Knock)</option>
+                <option value="glass">Glass (Crisp Crystal Tap)</option>
+                <option value="metal">Metal (Harmonic Metallic Chime)</option>
+                <option value="bell">Temple Bell (Resonant Brass Gong)</option>
+                <option value="soft">Soft (Silk Ribbon / Cord Rustle)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Mass / Weight (heavier charms swing slower)</label>
+              <input type="range" id="customCharmMass" min="1.5" max="6.0" step="0.1" value="3.2" style="width: 100%; accent-color: var(--accent);" />
+            </div>
+
+            <div class="form-group">
+              <label>Beads on Thread</label>
+              <select id="customCharmBeads" class="form-select">
+                <option value="0">0 Beads (Direct cord)</option>
+                <option value="1">1 Bead</option>
+                <option value="2" selected>2 Beads</option>
+                <option value="3">3 Beads</option>
+              </select>
+            </div>
+
+            <button id="btnSaveCustomCharm" class="btn-primary" style="margin-top: 12px;">
+              Hang On Rope
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Settings & Physics Tuning -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <h2>Hangly Settings & Physics</h2>
+        </div>
+        <button class="modal-close-btn" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-tabs">
+          <button class="settings-tab-btn active" data-tab="overlay">Overlay & Placement</button>
+          <button class="settings-tab-btn" data-tab="physics">Physics Solver (240Hz)</button>
+          <button class="settings-tab-btn" data-tab="audio">Sound Synthesizer</button>
+          <button class="settings-tab-btn" data-tab="about">About Hangly</button>
+        </div>
+
+        <!-- Tab: Overlay & Placement -->
+        <div class="settings-section active" id="tab-overlay">
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <span class="settings-row-title">Scale / Size</span>
+              <span class="settings-row-desc">Multiplier applied to cord and charm</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="sliderScale" min="0.5" max="2.0" step="0.05" value="1.0" />
+              <span class="slider-val" id="sliderScaleVal">100%</span>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <span class="settings-row-title">Opacity</span>
+              <span class="settings-row-desc">Overall transparency of charm overlay</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="sliderOpacity" min="0.2" max="1.0" step="0.05" value="1.0" />
+              <span class="slider-val" id="sliderOpacityVal">100%</span>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <span class="settings-row-title">Horizontal Offset</span>
+              <span class="settings-row-desc">Shift placement left or right</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="sliderHOffset" min="-400" max="400" step="10" value="0" />
+              <span class="slider-val" id="sliderHOffsetVal">0px</span>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <span class="settings-row-title">Vertical Offset</span>
+              <span class="settings-row-desc">Shift placement up or down</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="sliderVOffset" min="-100" max="400" step="10" value="0" />
+              <span class="slider-val" id="sliderVOffsetVal">0px</span>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <span class="settings-row-title">Studio Backdrop Theme</span>
+              <span class="settings-row-desc">Windows 11 Bloom or Minimalist Studio</span>
+            </div>
+            <select id="themeSelect" class="form-select" style="width: 200px;">
+              <option value="windows-bloom-dark" selected>Windows 11 Dark Bloom</option>
+              <option value="windows-bloom-light">Windows 11 Light Bloom</option>
+              <option value="aurora">Emerald Aurora</option>
+              <option value="studio-minimal">Studio Minimal (Pitch Black)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tab: Physics Solver -->
+        <div class="settings-section" id="tab-physics">
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <span class="settings-row-title">Gravity Acceleration</span>
+              <span class="settings-row-desc">Downward force pulling the charm (px/s²)</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="sliderGravity" min="500" max="4500" step="100" value="2000" />
+              <span class="slider-val" id="sliderGravityVal">2000</span>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <span class="settings-row-title">Air Damping</span>
+              <span class="settings-row-desc">Kinetic energy loss per step (0.999 = high momentum)</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="sliderDamping" min="0.98" max="0.999" step="0.001" value="0.999" />
+              <span class="slider-val" id="sliderDampingVal">0.999</span>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <span class="settings-row-title">Verlet Timestep</span>
+              <span class="settings-row-desc">Fixed at 240 Hz (4.16ms) decoupled from display rate</span>
+            </div>
+            <span style="font-weight: 700; color: var(--success); font-size: 13px;">Fixed 240 Hz</span>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <span class="settings-row-title">Inextensibility Ceiling</span>
+              <span class="settings-row-desc">Maximum permissible stretch ratio per link</span>
+            </div>
+            <span style="font-weight: 700; color: var(--gold); font-size: 13px;">1.02× Rest Length</span>
+          </div>
+        </div>
+
+        <!-- Tab: Audio Engine -->
+        <div class="settings-section" id="tab-audio">
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <span class="settings-row-title">Master Sound Volume</span>
+              <span class="settings-row-desc">Procedural tactile audio intensity</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="sliderVolume" min="0.0" max="1.0" step="0.05" value="0.75" />
+              <span class="slider-val" id="sliderVolumeVal">75%</span>
+            </div>
+          </div>
+
+          <div class="settings-row" style="flex-direction: column; align-items: flex-start; gap: 12px;">
+            <span class="settings-row-title">Test Material Impact Sounds</span>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="quick-btn btn-test-sound" data-sound="wood">Wood Knock</button>
+              <button class="quick-btn btn-test-sound" data-sound="glass">Glass Clink</button>
+              <button class="quick-btn btn-test-sound" data-sound="metal">Metal Ping</button>
+              <button class="quick-btn btn-test-sound" data-sound="bell">Temple Bell</button>
+              <button class="quick-btn btn-test-sound" data-sound="soft">Soft Rustle</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: About Hangly -->
+        <div class="settings-section" id="tab-about">
+          <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; padding: 20px 0;">
+            <img src="/assets/icons/hangly-icon-256.png" width="72" height="72" style="border-radius: 18px;" alt="Hangly" />
+            <h3 style="font-size: 20px; font-weight: 800;">Hangly for Windows</h3>
+            <p style="font-size: 13px; color: var(--text-secondary); max-width: 500px; line-height: 1.6;">
+              A tiny piece of motion for your desktop. Designed and built with real 240Hz Verlet rope dynamics, sliding beads, and sixteen cultural charms.
+            </p>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+              Windows Native Desktop Overlay & Web Studio Edition
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="/js/physics.js"></script>
+  <script src="/js/charms.js"></script>
+  <script src="/js/sound.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

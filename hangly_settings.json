@@ -1,0 +1,35 @@
+{
+  "overlay": {
+    "isEnabled": true,
+    "anchor": "topTrailing",
+    "scale": 1,
+    "opacity": 1,
+    "horizontalOffset": 0,
+    "verticalOffset": 0,
+    "isClickThrough": false,
+    "anchorsToScreenEdge": true,
+    "charm": "nimbuMirchi",
+    "hangMode": "topTrailing",
+    "customPinX": 0.5,
+    "customPinY": 0.05
+  },
+  "physics": {
+    "segmentCount": 20,
+    "segmentLength": 11,
+    "gravity": 2000,
+    "damping": 0.999,
+    "constraintIterations": 256,
+    "maxStretchRatio": 1.02,
+    "restSpeed": 4,
+    "framesBeforeSleep": 60,
+    "initialAngle": 0.38
+  },
+  "sound": {
+    "enabled": true,
+    "volume": 0.75
+  },
+  "studio": {
+    "theme": "windows-bloom-dark",
+    "showFps": true
+  }
+}

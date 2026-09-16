@@ -1,0 +1,27 @@
+{
+  "name": "hangly-windows",
+  "version": "1.0.0",
+  "description": "A tiny piece of motion for your Windows desktop — real 240Hz Verlet rope physics, charms, and studio",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "desktop": "python hangly_desktop.py",
+    "test": "node test/physics_test.js"
+  },
+  "keywords": [
+    "hangly",
+    "desktop",
+    "windows",
+    "physics",
+    "verlet",
+    "charms"
+  ],
+  "author": "Hangly Contributors",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "ws": "^8.16.0"
+  }
+}
